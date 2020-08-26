@@ -1,10 +1,9 @@
-use chrono::NaiveDateTime;
 use clap::Clap;
 use rusoto_core::{credential::ChainProvider, HttpClient, Region};
 use rusoto_logs::{
-    CloudWatchLogs, CloudWatchLogsClient, DescribeLogGroupsRequest, GetLogEventsRequest,
+    CloudWatchLogs, CloudWatchLogsClient, DescribeLogGroupsRequest, GetLogEventsRequest, LogGroup,
 };
-use std::sync::Arc;
+use std::{error::Error, sync::Arc};
 
 /// This doc string acts as a help message when the user runs '--help'
 /// as do all doc strings on fields
@@ -45,39 +44,13 @@ async fn main_async() {
 }
 
 async fn watch_main(w: Watch, client: CloudWatchLogsClient) {
-    let describe_request = DescribeLogGroupsRequest {
-        limit: Some(50),
-        log_group_name_prefix: Some("/ecs/".to_owned()),
-        next_token: None,
-    };
-
-    let log_groups = client
-        .describe_log_groups(describe_request)
-        .await
-        .expect("failed to get log groups");
-
-    let wanted_log_groups = log_groups
-        .log_groups
-        .expect("no logs for selected group")
-        .iter()
-        .filter(|item| {
-            if let Some(log_group_name) = item.log_group_name.clone() {
-                println!("lg: {:?} w:{:?}", log_group_name, w.input);
-                log_group_name.contains(&w.input)
-            } else {
-                false
-            }
-        })
-        .map(|item| item.log_group_name.clone().unwrap())
-        .collect::<Vec<String>>();
-
-    let mut logs: Vec<String> = vec![];
-
-    loop {
-        for log_group in wanted_log_groups.iter() {
-            let curr_time = chrono::offset::Utc::now();
-        }
-    }
+    let log_grouos = get_all_log_groups(&client, &w.input).await.unwrap();
+    println!("{:?}", log_grouos);
+    // loop {
+    //     for log_group in wanted_log_groups.iter() {
+    //         let curr_time = chrono::offset::Utc::now();
+    //     }
+    // }
 }
 
 // .map(|item| {
@@ -90,3 +63,64 @@ async fn watch_main(w: Watch, client: CloudWatchLogsClient) {
 //     // client.get_log_events(input)
 //     todo!()
 // })
+
+async fn get_all_log_groups(
+    client: &CloudWatchLogsClient,
+    filter: &str,
+) -> Result<Vec<String>, Box<dyn Error>> {
+    let mut log_groups_vector: Vec<LogGroup> = vec![];
+    let mut log_group_response = client
+        .describe_log_groups(DescribeLogGroupsRequest {
+            limit: Some(1),
+            log_group_name_prefix: Some("/ecs/".to_owned()),
+            next_token: None,
+        })
+        .await?;
+
+    if log_group_response.log_groups.is_none() {
+        return Ok(vec![]);
+    }
+
+    if log_group_response.next_token.is_none() {
+        return Ok(vec![log_group_response
+            .log_groups
+            .unwrap()
+            .first()
+            .unwrap()
+            .log_group_name
+            .clone()
+            .unwrap()]);
+    }
+
+    while let Some(next_token) = &log_group_response.next_token {
+        if let Some(log_groups) = log_group_response.log_groups.as_mut() {
+            log_groups_vector.append(log_groups);
+        }
+
+        log_group_response = client
+            .describe_log_groups(DescribeLogGroupsRequest {
+                limit: Some(10),
+                log_group_name_prefix: Some("/ecs/".to_owned()),
+                next_token: Some(next_token.to_owned()),
+            })
+            .await?
+    }
+
+    let wanted_log_groups = log_groups_vector
+        .iter()
+        .filter(|item| {
+            if let Some(log_group_name) = item.log_group_name.clone() {
+                log_group_name.contains(filter)
+            } else {
+                false
+            }
+        })
+        .map(|item| {
+            item.log_group_name
+                .clone()
+                .unwrap_or("missing log group name".to_owned())
+        })
+        .collect::<Vec<String>>();
+
+    Ok(wanted_log_groups)
+}
