@@ -1,7 +1,8 @@
 use clap::Clap;
 use rusoto_core::{credential::ChainProvider, HttpClient, Region};
 use rusoto_logs::{
-    CloudWatchLogs, CloudWatchLogsClient, DescribeLogGroupsRequest, GetLogEventsRequest, LogGroup,
+    CloudWatchLogs, CloudWatchLogsClient, DescribeLogGroupsRequest, DescribeLogStreamsRequest,
+    GetLogEventsRequest, LogGroup,
 };
 use std::{error::Error, sync::Arc};
 
@@ -44,8 +45,10 @@ async fn main_async() {
 }
 
 async fn watch_main(w: Watch, client: CloudWatchLogsClient) {
-    let log_grouos = get_all_log_groups(&client, &w.input).await.unwrap();
-    println!("{:?}", log_grouos);
+    let log_groups = get_all_log_groups(&client, &w.input).await.unwrap();
+    let log_groups = log_groups.iter().map(|s| &**s).collect();
+
+    get_all_log_events(&client, log_groups).await;
     // loop {
     //     for log_group in wanted_log_groups.iter() {
     //         let curr_time = chrono::offset::Utc::now();
@@ -123,4 +126,29 @@ async fn get_all_log_groups(
         .collect::<Vec<String>>();
 
     Ok(wanted_log_groups)
+}
+
+async fn get_all_log_events(
+    client: &CloudWatchLogsClient,
+    log_group_names: Vec<&str>,
+) -> Result<Vec<String>, Box<dyn Error>> {
+    for log_group in log_group_names {
+        let log_stream = client
+            .describe_log_streams(DescribeLogStreamsRequest {
+                descending: Some(true),
+                limit: Some(1),
+                log_group_name: log_group.to_owned(),
+                log_stream_name_prefix: None,
+                order_by: Some("LastEventTime".to_owned()),
+                next_token: None,
+            })
+            .await?;
+
+        println!("{:?}", log_stream);
+    }
+    // client.get_log_events(GetLogEventsRequest {
+
+    // });
+
+    todo!()
 }
