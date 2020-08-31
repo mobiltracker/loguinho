@@ -16,7 +16,7 @@ pub async fn get_all_log_groups<'a>(
     let mut log_group_response = client
         .describe_log_groups(DescribeLogGroupsRequest {
             limit: Some(1),
-            log_group_name_prefix: Some("/ecs/".to_owned()),
+            log_group_name_prefix: None,
             next_token: None,
         })
         .await?;
@@ -43,11 +43,11 @@ pub async fn get_all_log_groups<'a>(
 
         log_group_response = client
             .describe_log_groups(DescribeLogGroupsRequest {
-                limit: Some(10),
-                log_group_name_prefix: Some("/ecs/".to_owned()),
+                limit: Some(50),
+                log_group_name_prefix: None,
                 next_token: Some(next_token.to_owned()),
             })
-            .await?
+            .await?;
     }
 
     let wanted_log_groups = log_groups_vector
