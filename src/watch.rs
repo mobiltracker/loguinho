@@ -3,6 +3,7 @@ use rusoto_logs::CloudWatchLogsClient;
 
 use crate::{
     helpers::{get_all_log_groups, get_last_events_from_log_group, sleep},
+    pretty_print::pretty_print_log_event,
     Watch,
 };
 use std::error::Error;
@@ -22,7 +23,11 @@ pub async fn watch_main(w: Watch, client: CloudWatchLogsClient) -> Result<(), Bo
                 match events_result {
                     Ok(events) => {
                         if !events.is_empty() {
-                            println!("{:?}", events);
+                            let log_name = log_group.log_group_name.as_ref().map(|s| s.as_str());
+
+                            events
+                                .iter()
+                                .for_each(|event| pretty_print_log_event(event, log_name));
                         }
                     }
                     Err(err) => match err {
@@ -40,10 +45,11 @@ pub async fn watch_main(w: Watch, client: CloudWatchLogsClient) -> Result<(), Bo
                         _ => println!("error: {}", err.to_string()),
                     },
                 }
+                sleep(Duration::from_millis(50)).await;
             }
-            sleep(Duration::from_millis(500)).await;
+            sleep(Duration::from_millis(250)).await;
         }
 
-        sleep(Duration::from_secs(10)).await;
+        sleep(Duration::from_secs(5)).await;
     }
 }

@@ -6,6 +6,7 @@ use std::sync::Arc;
 use watch::watch_main;
 
 mod helpers;
+mod pretty_print;
 mod watch;
 
 /// This doc string acts as a help message when the user runs '--help'
