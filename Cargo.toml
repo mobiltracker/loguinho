@@ -13,3 +13,4 @@ rusoto_core = { version="0.45.0", default_features=false, features=["rustls"] }
 rusoto_logs = { version="0.45.0", default_features=false, features=["rustls"] }
 clap = "3.0.0-beta.1"
 chrono = "0.4"
+colored = "2.0.0"
