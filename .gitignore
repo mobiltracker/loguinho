@@ -1,2 +1,4 @@
 /target
 **/*.rs.bk
+choco/tools/loguinho.exe
+choco/**.nupkg

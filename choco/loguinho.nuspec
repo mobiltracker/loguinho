@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>loguinho</id>
+    <version>0.0.3</version>
+    <owners>Matheus Cruz - mlcruz@inf.ufrgs.br</owners>
+    <!-- ============================== -->
+    <title>Loguinho (Install)</title>
+    <authors>Matheus Cruz - mlcruz@inf.ufrgs.b</authors>
+    <projectUrl>https://github.com/mobiltracker/loguinho</projectUrl>
+    <projectSourceUrl>https://github.com/mobiltracker/loguinho</projectSourceUrl>
+    <docsUrl>https://github.com/mobiltracker/loguinho</docsUrl>
+    <tags>loguinho cloudwatch aws logs</tags>
+    <summary>Cli helper for cloudwatch logs</summary>
+    <description>Cli helper for cloudwatch logs</description>
+
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

@@ -1,0 +1,9 @@
+﻿VERIFICATION
+Verification is intended to assist the Chocolatey moderators and community
+in verifying that this package's contents are trustworthy.
+ 
+Documentation and source code: 
+https://github.com/mobiltracker/loguinho
+
+Compiled binaries SHA256 
+Loguinho.exe - 0.0.3 - 7622D4E3E43E75644860E5394172FBDCDB1C45A0E11295BF13D95776A7D05869
