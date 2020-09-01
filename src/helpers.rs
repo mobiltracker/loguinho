@@ -122,3 +122,15 @@ pub async fn get_last_events_from_log_group(
 pub async fn sleep(dur: Duration) {
     smol::Timer::new(dur).await;
 }
+
+pub async fn ping_client(client: &CloudWatchLogsClient) -> Result<(), Box<dyn Error>> {
+    client
+        .describe_log_groups(DescribeLogGroupsRequest {
+            limit: Some(1),
+            log_group_name_prefix: None,
+            next_token: None,
+        })
+        .await?;
+
+    Ok(())
+}

@@ -1,8 +1,12 @@
 use clap::Clap;
-use rusoto_core::{credential::ChainProvider, HttpClient, Region};
+use rusoto_core::{
+    credential::{ChainProvider, ProfileProvider},
+    HttpClient, Region,
+};
 use rusoto_logs::CloudWatchLogsClient;
 
-use std::sync::Arc;
+use helpers::ping_client;
+use std::{error::Error, sync::Arc, time::Duration};
 use watch::watch_main;
 
 mod helpers;
@@ -31,18 +35,39 @@ pub struct Watch {
 }
 
 fn main() {
-    smol::run(async { main_async().await });
+    smol::run(async { main_async().await.unwrap() });
 }
 
-async fn main_async() {
+async fn main_async() -> Result<(), Box<dyn Error>> {
     let opts: Opts = Opts::parse();
 
-    let chain = ChainProvider::new();
-    let dispatcher = Arc::new(HttpClient::new().expect("failed to create request dispatcher"));
+    colored::control::set_virtual_terminal(true).unwrap();
 
-    let client = CloudWatchLogsClient::new_with(dispatcher, chain, Region::SaEast1);
+    let mut profile = ProfileProvider::new()?;
+    profile.set_profile("loguinho");
+    let mut chain = ChainProvider::with_profile_provider(profile);
+    chain.set_timeout(Duration::from_secs(2));
+    let dispatcher = Arc::new(HttpClient::new()?);
+
+    let mut client = CloudWatchLogsClient::new_with(dispatcher, chain, Region::SaEast1);
+
+    match ping_client(&client).await {
+        Ok(_) => {}
+        Err(_) => {
+            let dispatcher = Arc::new(HttpClient::new()?);
+
+            println!("Missing [loguinho] profile for aws credentials -> Trying default");
+
+            let mut chain = ChainProvider::new();
+            chain.set_timeout(Duration::from_secs(2));
+
+            client = CloudWatchLogsClient::new_with(dispatcher, chain, Region::SaEast1)
+        }
+    }
 
     match opts.subcmd {
-        SubCommand::Watch(w) => watch_main(w, client).await.unwrap(),
+        SubCommand::Watch(w) => watch_main(w, client).await?,
     }
+
+    Ok(())
 }
