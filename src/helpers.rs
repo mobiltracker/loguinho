@@ -48,6 +48,11 @@ pub async fn get_all_log_groups<'a>(
                 next_token: Some(next_token.to_owned()),
             })
             .await?;
+
+        if log_group_response.next_token.is_none() && log_group_response.log_groups.is_some() {
+            log_groups_vector.append(&mut log_group_response.log_groups.unwrap());
+            break;
+        }
     }
 
     let wanted_log_groups = log_groups_vector

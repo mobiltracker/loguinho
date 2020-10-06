@@ -13,6 +13,7 @@ pub async fn watch_main(w: Watch, client: CloudWatchLogsClient) -> Result<(), Bo
     let log_groups = get_all_log_groups(&client, &w.input.unwrap_or("".to_owned())).await?;
     let mut log_events_filter: HashSet<Option<String>> = HashSet::new();
 
+    println!("{:?}", log_groups);
     loop {
         let curr_timestamp = chrono::offset::Utc::now().timestamp_millis() - 30000;
 
