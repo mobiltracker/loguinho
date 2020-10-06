@@ -1,6 +1,6 @@
 [package]
 name = "loguinho"
-version = "0.0.3"
+version = "0.0.4"
 authors = ["mlcruz1 <mlcruz@inf.ufrgs.br>"]
 edition = "2018"
 
